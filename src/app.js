@@ -7,7 +7,7 @@ passport.use(
   new RedditStrategy({
     clientID: process.env.REDDIT_KEY,
     clientSecret: process.env.REDDIT_SECRET,
-    callbackURL: "http://goula.sh:3000/auth/reddit/callback"
+    callbackURL: "http://goula.sh/auth/reddit/callback"
   },
   function(accessToken, refreshToken, profile, done) {
     process.nextTick(function() {
