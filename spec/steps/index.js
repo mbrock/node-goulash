@@ -18,6 +18,32 @@ var steps = function() {
       callback.fail();
     }
   });
+
+  this.Then(/^I should see a link "([^"]*)"$/, function(text, callback) {
+    if (this.browser.link(text) !== undefined) {
+      callback();
+    } else {
+      callback.fail();
+    }
+  });
+
+  this.When(/^I click "([^"]*)"$/, function(text, callback) {
+    this.browser.clickLink(text, callback);
+  });
+  
+  this.Then(
+    "I should be redirected to Reddit's login page",
+    function(callback) {
+      if (this.browser.location.href.match(/reddit/)) {
+        if (this.browser.query('input')) {
+          callback();
+        } else {
+          callback.fail(new Error("No input field on reddit login"));
+        }
+      } else {
+        callback.fail(new Error("Wrong URL: " + this.browser.location));
+      }
+    });
 };
 
 module.exports = steps;
