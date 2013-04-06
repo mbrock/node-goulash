@@ -4,6 +4,9 @@ Feature: Index page
   So that I can have fun
 
   Scenario: Accessing the root URL
-    Given the server is started
     When I visit the root URL
     Then I should get an OK HTTP response
+
+  Scenario: Seeing a link to reddit login
+    When I visit the root URL
+    Then I should see a link "Login through Reddit"
