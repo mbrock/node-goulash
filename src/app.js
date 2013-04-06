@@ -7,7 +7,12 @@ app.get('/', function(req, res) {
 
 exports.goulash = {
   start: function(port, callback) {
-    app.listen(port);
+    this.server = app.listen(port);
+    callback();
+  },
+
+  stop: function(callback) {
+    this.server.close();
     callback();
   }
 };
