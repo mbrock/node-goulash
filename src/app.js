@@ -38,7 +38,11 @@ app.configure(function() {
 });
 
 app.get('/', function(req, res) {
-  res.send('<a href="/auth/reddit">Login through Reddit</a>');
+  if (req.user) {
+    res.redirect('/start');
+  } else {
+    res.send('<a href="/auth/reddit">Login through Reddit</a>');
+  }
 });
 
 app.get('/auth/reddit', function(req, res, next) {
