@@ -60,7 +60,7 @@ app.get('/auth/reddit/callback', function(req, res, next) {
 });
 
 app.get('/start', function(req, res) {
-  res.send('Welcome ' + req.user.username + '!');
+  res.send('Welcome ' + req.user.id + '!');
 });
 
 exports.goulash = {
