@@ -1,1 +1,1 @@
-require('./src/app.js').goulash.start(3000, function() {});
+require('./src/app.js').goulash.start(process.env.GOULASH_PORT, function() {});
