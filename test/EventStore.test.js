@@ -1,9 +1,6 @@
-var chai = require('chai'),
-    chaiAsPromised = require('chai-as-promised'),
-    Q = require('q');
+require('./common.js');
 
-chai.use(chaiAsPromised);
-chai.should();
+var Q = require('q');
 
 describe('EventStore', function() {
   var EventStore;
@@ -25,20 +22,14 @@ describe('EventStore', function() {
   });
 
   it('should send an event to two registered listeners', function(done) {
-    var a = Q.defer(),
-        b = Q.defer();
+    var a = Q.defer(), b = Q.defer();
 
     EventStore.registerListener(f, 'f');
     EventStore.registerListener(g, 'g');
     EventStore.push({ x: 1 });
 
-    function f(event) {
-      a.resolve(event);
-    };
-
-    function g(event) {
-      b.resolve(event);
-    };
+    function f(event) { a.resolve(event); };
+    function g(event) { b.resolve(event); };
 
     Q.all([
       a.promise.should.become({ x: 1 }),
@@ -52,9 +43,7 @@ describe('EventStore', function() {
     EventStore.registerListener(f, 'f', ['foo']);
     EventStore.push({ eventType: 'bar' });
 
-    function f(event) {
-      a++;
-    };
+    function f(event) { a++; };
 
     setTimeout(function() {
       a.should.eql(0);
@@ -68,9 +57,7 @@ describe('EventStore', function() {
     EventStore.registerListener(f, 'f', ['foo']);
     EventStore.push({ eventType: 'foo' });
 
-    function f(event) {
-      a.resolve(event);
-    };
+    function f(event) { a.resolve(event) };
 
     a.promise.should.eventually.eql({ eventType: 'foo' }).notify(done);
   });    
