@@ -2,7 +2,26 @@ var express = require('express')
   , passport = require('passport')
   , crypto = require('crypto')
   , RedditStrategy = require('passport-reddit').Strategy
-  , _ = require('underscore');
+  , _ = require('underscore')
+  , Bunyan = require('bunyan')
+  , expressBunyan = require('./express-bunyan.js');
+
+var log = new Bunyan({ 
+  name: "goulash",
+  serializers: {
+    req: Bunyan.stdSerializers.req
+  },
+  streams: [
+    {
+      stream: process.stdout,
+      level: 'debug'
+    },
+    {
+      path: 'goulash.log',
+      level: 'trace'
+    }
+  ]
+});
 
 passport.use(
   new RedditStrategy({
@@ -11,10 +30,17 @@ passport.use(
     callbackURL: "http://goula.sh/auth/reddit/callback"
   },
   function(accessToken, refreshToken, profile, done) {
-    console.log("reddit id " + profile.id);
-    UserRegistry.findOrCreateRedditUser(profile.id, profile.name, function(user) {
-      done(null, user);
-    });
+    log.trace({
+      accessToken: accessToken,
+      refreshToken: refreshToken,
+      profile: profile
+    }, "Reddit authorization callback");
+
+    UserRegistry.findOrCreateRedditUser(
+      profile.id, profile.name, function(user) {
+        done(null, user);
+      }
+    );
   }
 ));
 
@@ -36,6 +62,8 @@ app.configure(function() {
   app.use(express.session({ secret: 'top secret' }));
   app.use(passport.initialize());
   app.use(passport.session());
+  app.use(expressBunyan.logger(log));
+  app.use(expressBunyan.errorLogger(log));
   app.use(app.router);
 });
 
@@ -45,10 +73,11 @@ var EventStore = {
 };
 
 EventStore.push = function(event) {
+  log.debug({ event: event }, "New event");
   this.events.push(event);
 };
 
-EventStore.registerListener = function(listener, eventTypes) {
+EventStore.registerListener = function(listener, name, eventTypes) {
   function makeFilteringListener() {
     return function(event) {
       if (_.contains(eventTypes, event.eventType)) {
@@ -62,6 +91,11 @@ EventStore.registerListener = function(listener, eventTypes) {
   } else {
     this.listeners.push(listener);
   }
+
+  log.trace({
+    listenerName: name,
+    eventTypes: eventTypes
+  }, "Event listener registered");
 };
 
 var UserRegistry = {
@@ -105,7 +139,7 @@ EventStore.registerListener(function(event) {
     userName: event.payload.userName,
     credentials: event.payload.credentials
   };
-}, ['user-registered']);
+}, 'user-registry', ['user-registered']);
 
 app.get('/', function(req, res) {
   if (req.user) {
@@ -134,22 +168,24 @@ app.get('/auth/reddit/callback', function(req, res, next) {
 });
 
 app.get('/auth/done', function(req, res) {
+  log.debug({ req: req }, "Authorization complete");
   res.redirect('/start');
 });
 
 app.get('/start', function(req, res) {
-  console.log('User: ' + req.user);
   res.send('Welcome ' + JSON.stringify(req.user) + '!');
 });
 
 exports.goulash = {
   start: function(port, callback) {
     this.server = app.listen(port);
+    log.info({ port: port }, "Goulash started");
     callback();
   },
 
   stop: function(callback) {
     this.server.close();
+    log.info("Goulash stopped");
     callback();
   }
 };
