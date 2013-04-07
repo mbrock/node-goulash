@@ -1,18 +1,18 @@
 (function() {
-  var EventListener = function(options) {
+  var EventStore = function(options) {
     this.Log = options.Log;
 
     this.listeners = [];
     this.events = [];
   };
 
-  EventListener.prototype.push = function(event) {
+  EventStore.prototype.push = function(event) {
     this.Log.debug({ event: event }, "New event");
   };
 
-  EventListener.prototype.registerListener =
+  EventStore.prototype.registerListener =
     function(listener, name, types) {
     };
 
-  module.exports = EventListener;
+  module.exports = EventStore;
 })();
