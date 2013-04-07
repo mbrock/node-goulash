@@ -6,6 +6,8 @@ var express = require('express')
   , Bunyan = require('bunyan')
   , expressBunyan = require('./express-bunyan.js');
 
+var conf = require('./conf.js');
+
 var log = new Bunyan({ 
   name: "goulash",
   serializers: {
@@ -25,9 +27,9 @@ var log = new Bunyan({
 
 passport.use(
   new RedditStrategy({
-    clientID: process.env.REDDIT_KEY,
-    clientSecret: process.env.REDDIT_SECRET,
-    callbackURL: "http://goula.sh/auth/reddit/callback"
+    clientID: conf.redditKey,
+    clientSecret: conf.redditSecret,
+    callbackURL: conf.baseUrl + "auth/reddit/callback"
   },
   function(accessToken, refreshToken, profile, done) {
     log.trace({

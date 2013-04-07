@@ -44,6 +44,25 @@ var steps = function() {
         callback.fail(new Error("Wrong URL: " + this.browser.location));
       }
     });
+
+  this.When(/^I enter valid reddit credentials$/, function(callback) {
+    var browser = this.browser;
+    browser
+      .fill('user', this.conf.test.reddit.username)
+      .fill('passwd', this.conf.test.reddit.password)
+      .pressButton('login', function() {
+        console.log(browser.html());
+        browser.pressButton('authorize', callback);
+      });
+  });
+
+  this.Then(/^I should return to Goulash$/, function(callback) {
+    if (this.browser.location.href === this.conf.baseUrl + 'start') {
+      callback();
+    } else {
+      callback.fail(new Error("Ended up at " + this.browser.location));
+    }
+  });
 };
 
 module.exports = steps;

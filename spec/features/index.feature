@@ -7,17 +7,10 @@ Feature: Index page
     When I visit the root URL
     Then I should get an OK HTTP response
 
-  Scenario: Seeing a link to reddit login
-    When I visit the root URL
-    Then I should see a link "Login through Reddit"
-
-  Scenario: Clicking reddit login link
-    When I visit the root URL
-    And I click "Login through Reddit"
-    Then I should be redirected to Reddit's login page
-
   Scenario: Logging in through reddit
     When I visit the root URL
-    And I click "Login through Reddit"
+    Then I should see a link "Login through Reddit"
+    When I click "Login through Reddit"
+    Then I should be redirected to Reddit's login page
     And I enter valid reddit credentials
     Then I should return to Goulash
