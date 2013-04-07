@@ -1,14 +1,5 @@
-var express = require('express')
-  , passport = require('passport')
-  , crypto = require('crypto')
-  , RedditStrategy = require('passport-reddit').Strategy
-  , _ = require('underscore')
-  , Bunyan = require('bunyan')
-  , expressBunyan = require('./express-bunyan.js');
-
-var conf = require('./conf.js');
-
-var log = new Bunyan({ 
+var Bunyan = require('bunyan');
+var log = Bunyan.createLogger({ 
   name: "goulash",
   serializers: {
     req: Bunyan.stdSerializers.req
@@ -23,6 +14,24 @@ var log = new Bunyan({
       level: 'trace'
     }
   ]
+});
+
+var express = require('express')
+  , passport = require('passport')
+  , crypto = require('crypto')
+  , RedditStrategy = require('passport-reddit').Strategy
+  , _ = require('underscore')
+  , expressBunyan = require('./express-bunyan.js');
+
+var conf = require('./conf.js');
+
+var EventStore = new (require('./EventStore.js'))({
+  Log: log
+});
+
+var UserRegistry = new (require('./UserRegistry.js'))({
+  Log: log,
+  EventStore: EventStore
 });
 
 passport.use(
@@ -68,80 +77,6 @@ app.configure(function() {
   app.use(expressBunyan.errorLogger(log));
   app.use(app.router);
 });
-
-var EventStore = {
-  listeners: [],
-  events: []
-};
-
-EventStore.push = function(event) {
-  log.debug({ event: event }, "New event");
-  this.events.push(event);
-};
-
-EventStore.registerListener = function(listener, name, eventTypes) {
-  function makeFilteringListener() {
-    return function(event) {
-      if (_.contains(eventTypes, event.eventType)) {
-        listener(event);
-      }
-    };
-  }
-
-  if (eventTypes !== undefined) {
-    this.registerListener(makeFilteringListener());
-  } else {
-    this.listeners.push(listener);
-  }
-
-  log.trace({
-    listenerName: name,
-    eventTypes: eventTypes
-  }, "Event listener registered");
-};
-
-var UserRegistry = {
-  users: {}
-};
-
-UserRegistry.findOrCreateRedditUser = function(redditId, name, callback) {
-  function isTheOne(user) {
-    return user.credentials.redditId === redditId;
-  }
-
-  var user = _.find(_.values(this.users), isTheOne)
-
-  if (user) {
-    callback(user);
-  } else {
-    var aggregateId = _.uniqueId('user');
-    var newUser = {
-      aggregateId: aggregateId,
-      userName: name,
-      credentials: {
-        redditId: redditId
-      }
-    };
-
-    EventStore.push({
-      eventType: 'user-registered',
-      aggregateId: aggregateId,
-      payload: newUser
-    });
-
-    this.users[aggregateId] = newUser;
-
-    callback(newUser);
-  }
-};
-
-EventStore.registerListener(function(event) {
-  UserRegistry.users[event.aggregateId] = {
-    aggregateId: event.aggregateId,
-    userName: event.payload.userName,
-    credentials: event.payload.credentials
-  };
-}, 'user-registry', ['user-registered']);
 
 app.get('/', function(req, res) {
   if (req.user) {
