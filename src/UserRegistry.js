@@ -1,49 +1,52 @@
-var _ = require('underscore');
-
-module.exports = function(options) {
-  var self = this;
-
-  var Log = options.Log,
-      EventStore = options.EventStore;
-
-  var users = {};
-
-  this.findOrCreateRedditUser = function(redditId, name, callback) {
-    function isTheOne(user) {
-      return user.credentials.redditId === redditId;
-    }
+(function() {
+  var _ = require('underscore');
+  
+  var UserRegistry = function(options) {
+    this.Log = options.Log;
+    this.EventStore = options.EventStore;
     
-    var user = _.find(_.values(this.users), isTheOne)
-    
-    if (user) {
-      callback(user);
-    } else {
-      var aggregateId = _.uniqueId('user');
-      var newUser = {
-        aggregateId: aggregateId,
-        userName: name,
-        credentials: {
-          redditId: redditId
-        }
+    this.users = {};
+
+    this.EventStore.registerListener(function(event) {
+      users[event.aggregateId] = {
+        aggregateId: event.aggregateId,
+        userName: event.payload.userName,
+        credentials: event.payload.credentials
       };
-      
-      EventStore.push({
-        eventType: 'user-registered',
-        aggregateId: aggregateId,
-        payload: newUser
-      });
-      
-      users[aggregateId] = newUser;
-      
-      callback(newUser);
-    }
+    }.bind(this), 'user-registry', ['user-registered']);
   };
-
-  EventStore.registerListener(function(event) {
-    users[event.aggregateId] = {
-      aggregateId: event.aggregateId,
-      userName: event.payload.userName,
-      credentials: event.payload.credentials
+  
+  UserRegistry.prototype.findOrCreateRedditUser = 
+    function(redditId, name, callback) {
+      function isTheOne(user) {
+        return user.credentials.redditId === redditId;
+      }
+      
+      var user = _.find(_.values(this.users), isTheOne)
+      
+      if (user) {
+        callback(user);
+      } else {
+        var aggregateId = _.uniqueId('user');
+        var newUser = {
+          aggregateId: aggregateId,
+          userName: name,
+          credentials: {
+            redditId: redditId
+          }
+        };
+        
+        this.EventStore.push({
+          eventType: 'user-registered',
+          aggregateId: aggregateId,
+          payload: newUser
+        });
+        
+        this.users[aggregateId] = newUser;
+        
+        callback(newUser);
+      }
     };
-  }, 'user-registry', ['user-registered']);
-};
+
+  module.exports = UserRegistry;
+})();

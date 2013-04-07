@@ -1,13 +1,18 @@
-module.exports = function(options) {
-  var Log = options.Log;
+(function() {
+  var EventListener = function(options) {
+    this.Log = options.Log;
 
-  var listeners = [];
-  var events = [];
-
-  this.push = function(event) {
-    Log.debug({ event: event }, "New event");
+    this.listeners = [];
+    this.events = [];
   };
 
-  this.registerListener = function(listener, name, types) {
-  }
-};
+  EventListener.prototype.push = function(event) {
+    this.Log.debug({ event: event }, "New event");
+  };
+
+  EventListener.prototype.registerListener =
+    function(listener, name, types) {
+    };
+
+  module.exports = EventListener;
+})();
