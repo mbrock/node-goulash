@@ -3,7 +3,13 @@ module.exports = function(grunt) {
     pkg: grunt.file.readJSON('package.json'),
 
     mochaTest: {
-      files: ['test/**/*.js']
+      files: ['test/**/*.js'],
+    },
+
+    mochaTestConfig: {
+      options: {
+        reporter: 'spec'
+      }
     },
 
     cucumberjs: {
